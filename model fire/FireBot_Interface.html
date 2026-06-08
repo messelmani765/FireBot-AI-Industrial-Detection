@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FireBot</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c10;--panel:#111520;--border:#1e2535;
+  --accent:#ff4500;--accent2:#ff8c00;
+  --green:#00e5a0;--text:#c8d0e0;--dim:#4a5568;
+  --font:'Rajdhani',sans-serif;--mono:'Share Tech Mono',monospace
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+
+/* HEADER */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 18px;border-bottom:1px solid var(--border);
+  background:rgba(10,12,16,.97);position:sticky;top:0;z-index:99;
+  flex-wrap:wrap;gap:8px
+}
+.logo{font-size:1.35rem;font-weight:700;letter-spacing:4px;color:var(--accent)}
+.logo b{color:var(--text)}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:20px;
+  border:1px solid var(--border);background:var(--panel);
+  font-family:var(--mono);font-size:10px
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim);transition:.3s}
+.dot.on  {background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot.fire{background:var(--accent);animation:pulse .5s infinite alternate}
+@keyframes pulse{to{transform:scale(1.7)}}
+
+/* LAYOUT */
+.layout{
+  display:grid;grid-template-columns:1fr 215px;
+  gap:12px;padding:12px 18px;max-width:1280px;margin:0 auto
+}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.card-title{
+  font-size:10px;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--dim);padding:8px 14px;border-bottom:1px solid var(--border)
+}
+
+/* VIDÉO */
+.vid-col{grid-column:1;display:flex;flex-direction:column}
+.vid-wrap{position:relative;width:100%;background:#05070d;line-height:0}
+#vid{width:100%;display:block;min-height:200px}
+#cv{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.fire-badge{
+  position:absolute;top:10px;left:10px;
+  background:rgba(255,69,0,.95);color:#fff;
+  font-family:var(--mono);font-size:11px;
+  padding:5px 13px;border-radius:4px;
+  display:none;animation:blink .5s infinite;z-index:9
+}
+@keyframes blink{50%{opacity:.15}}
+
+/* BARRE CONFIANCE */
+.conf{padding:9px 14px}
+.conf-row{
+  display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:5px
+}
+.bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .3s}
+
+/* SERVO */
+.servo{padding:11px 14px}
+.servo-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.sval{font-family:var(--mono);font-size:1.25rem;color:var(--accent);min-width:46px;text-align:center}
+.sbtns{display:flex;gap:7px}
+.sbtn{
+  flex:1;padding:7px 0;background:transparent;
+  border:1px solid var(--border);color:var(--text);
+  border-radius:6px;font-family:var(--font);font-size:12px;font-weight:600;
+  cursor:pointer;transition:.15s
+}
+.sbtn:hover,.sbtn:active{background:rgba(255,69,0,.15);border-color:var(--accent);color:var(--accent)}
+
+input[type=range]{
+  -webkit-appearance:none;height:5px;background:var(--border);
+  border-radius:3px;outline:none;cursor:pointer;flex:1
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;
+  border-radius:50%;background:var(--accent);cursor:pointer
+}
+
+/* DROITE */
+.right{display:flex;flex-direction:column;gap:11px}
+
+/* DPAD */
+.dpad{
+  display:grid;grid-template-columns:repeat(3,62px);
+  grid-template-rows:repeat(3,62px);gap:6px;
+  padding:13px;place-content:center
+}
+.dbtn{
+  background:var(--border);border:none;border-radius:8px;
+  color:var(--text);font-size:1.5rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:.15s;user-select:none;outline:none;
+  -webkit-tap-highlight-color:transparent
+}
+.dbtn:hover,.dbtn:active{background:rgba(255,69,0,.25);color:var(--accent)}
+.dbtn.stop{
+  background:rgba(255,69,0,.1)!important;
+  border:1px solid var(--accent)!important;
+  color:var(--accent)!important;
+  font-family:var(--mono);font-size:9px;letter-spacing:1px
+}
+.dbtn.empty{visibility:hidden}
+.spd-row{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 14px 12px;font-size:10px;
+  color:var(--dim);text-transform:uppercase;letter-spacing:1px
+}
+.spd-val{font-family:var(--mono);color:var(--green);font-size:11px;min-width:30px;text-align:right}
+
+/* CONFIG */
+.cfg{padding:12px 14px}
+.lbl{
+  display:block;font-size:9px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--dim);
+  margin-bottom:4px;margin-top:10px
+}
+.lbl:first-child{margin-top:0}
+.inp{
+  width:100%;background:#0d1118;border:1px solid var(--border);
+  color:var(--text);padding:6px 10px;border-radius:5px;
+  font-family:var(--mono);font-size:11px;outline:none
+}
+.inp:focus{border-color:var(--accent)}
+.conn-btn{
+  width:100%;margin-top:11px;padding:9px;
+  background:rgba(255,69,0,.18);border:1px solid var(--accent);
+  border-radius:6px;color:var(--accent);
+  font-family:var(--font);font-size:13px;font-weight:700;
+  letter-spacing:2px;cursor:pointer;text-transform:uppercase;transition:.2s
+}
+.conn-btn:hover{background:rgba(255,69,0,.35)}
+.info{
+  margin-top:8px;padding:7px 9px;background:#05070d;
+  border-radius:5px;font-family:var(--mono);
+  font-size:10px;color:var(--dim);line-height:1.9
+}
+
+@media(max-width:720px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Fire<b>Bot</b></div>
+  <div class="pills">
+    <div class="pill"><div class="dot" id="dc"></div><span id="lc">CAM —</span></div>
+    <div class="pill"><div class="dot" id="dr"></div><span id="lr">CAR —</span></div>
+    <div class="pill"><div class="dot" id="df"></div><span id="lf">NO FIRE</span></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Vidéo -->
+  <div class="vid-col card">
+    <div class="card-title">◉ Live Camera</div>
+    <div class="vid-wrap">
+      <img id="vid" alt="stream"
+        src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+      <canvas id="cv"></canvas>
+      <div class="fire-badge" id="fb">⚠ FIRE DETECTED</div>
+    </div>
+
+    <div class="conf">
+      <div class="conf-row">
+        <span>Confiance détection fire</span>
+        <span id="pct">0%</span>
+      </div>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+    </div>
+
+    <div class="card-title" style="border-top:1px solid var(--border)">↔ Servo Caméra</div>
+    <div class="servo">
+      <div class="servo-row">
+        <span style="font-size:10px;color:var(--dim)">0°</span>
+        <input type="range" id="sl" min="0" max="180" value="90" oninput="onSrv(this.value)">
+        <span style="font-size:10px;color:var(--dim)">180°</span>
+        <div class="sval" id="sv">90°</div>
+      </div>
+      <div class="sbtns">
+        <button class="sbtn" onclick="setSrv(0)">◀ Gauche</button>
+        <button class="sbtn" onclick="setSrv(90)">■ Centre</button>
+        <button class="sbtn" onclick="setSrv(180)">Droite ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Droite -->
+  <div class="right">
+
+    <!-- Moteurs -->
+    <div class="card">
+      <div class="card-title">⚙ Moteurs</div>
+      <div class="dpad">
+        <div class="dbtn empty"></div>
+        <button class="dbtn"
+          onmousedown="mv('forward')" onmouseup="mv('stop')"
+          ontouchstart="mv('forward')" ontouchend="mv('stop')">▲</button>
+        <div class="dbtn empty"></div>
+
+        <button class="dbtn"
+          onmousedown="mv('left')" onmouseup="mv('stop')"
+          ontouchstart="mv('left')" ontouchend="mv('stop')">◀</button>
+        <button class="dbtn stop" onclick="mv('stop')">STOP</button>
+        <button class="dbtn"
+          onmousedown="mv('right')" onmouseup="mv('stop')"
+          ontouchstart="mv('right')" ontouchend="mv('stop')">▶</button>
+
+        <div class="dbtn empty"></div>
+        <button class="dbtn"
+          onmousedown="mv('backward')" onmouseup="mv('stop')"
+          ontouchstart="mv('backward')" ontouchend="mv('stop')">▼</button>
+        <div class="dbtn empty"></div>
+      </div>
+      <div class="spd-row">
+        <span>Vitesse</span>
+        <input type="range" min="50" max="255" value="200" step="5" oninput="setSpd(this.value)">
+        <span class="spd-val" id="sv2">200</span>
+      </div>
+    </div>
+
+    <!-- Config -->
+    <div class="card">
+      <div class="card-title">⚙ Configuration</div>
+      <div class="cfg">
+        <label class="lbl">IP ESP32-CAM</label>
+        <input class="inp" type="text" id="ic" placeholder="ex: 10.61.206.71">
+        <label class="lbl">IP ESP32 Voiture</label>
+        <input class="inp" type="text" id="ir" placeholder="ex: 10.61.206.24">
+        <button class="conn-btn" onclick="connect()">▶ Connecter</button>
+        <div class="info" id="info">
+          Lis les IPs dans le<br>Moniteur Série Arduino<br>puis clique Connecter
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var CAM='', CAR='';
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var vid=document.getElementById('vid');
+
+// Canvas resize
+function rsz(){
+  cv.width=vid.clientWidth||320;
+  cv.height=vid.clientHeight||240;
+}
+window.addEventListener('resize',rsz);
+vid.addEventListener('load',function(){
+  rsz();
+  dot('dc','lc','CAM ✓','on');
+});
+vid.onerror=function(){ dot('dc','lc','CAM —',''); };
+setTimeout(rsz,800);
+setInterval(rsz,2000);
+
+// Connexion
+function connect(){
+  CAM=document.getElementById('ic').value.trim();
+  CAR=document.getElementById('ir').value.trim();
+  if(!CAM||!CAR){alert('Entre les 2 IPs !');return;}
+  document.getElementById('info').innerHTML='CAM → '+CAM+'<br>CAR → '+CAR+'<br>Connexion...';
+  // Démarre le stream
+  vid.src='http://'+CAM+'/stream';
+  // Vérifie la voiture
+  chkCar();
+}
+
+// Vérifie ESP32 voiture
+function chkCar(){
+  if(!CAR)return;
+  fetch('http://'+CAR+'/status',{signal:AbortSignal.timeout(2500)})
+  .then(function(){
+    dot('dr','lr','CAR ✓','on');
+    document.getElementById('info').innerHTML='CAM ✓ '+CAM+'<br>CAR ✓ '+CAR;
+  })
+  .catch(function(){
+    dot('dr','lr','CAR —','');
+  });
+}
+
+// Poll status CAM — 400ms
+function poll(){
+  if(!CAM)return;
+  fetch('http://'+CAM+'/status',{signal:AbortSignal.timeout(600)})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    dot('dc','lc','CAM ✓','on');
+
+    // Confiance
+    var p=Math.round(d.confidence*100);
+    document.getElementById('pct').textContent=p+'%';
+    document.getElementById('fill').style.width=p+'%';
+
+    // Détection fire
+    if(d.fire){
+      document.getElementById('fb').style.display='block';
+      dot('df','lf','⚠ FIRE '+p+'%','fire');
+      drawBox(d.fx,d.fy,d.fw,d.fh,d.confidence);
+    } else {
+      document.getElementById('fb').style.display='none';
+      dot('df','lf','NO FIRE','');
+      ctx.clearRect(0,0,cv.width,cv.height);
+    }
+
+    // Servo sync
+    var sa=parseInt(d.servo)||90;
+    document.getElementById('sl').value=sa;
+    document.getElementById('sv').textContent=sa+'°';
+  })
+  .catch(function(){ dot('dc','lc','CAM —',''); });
+}
+
+// Dessine bounding box + label
+function drawBox(fx,fy,fw,fh,c){
+  if(fx<0||fw===0){drawGlobal();return;}
+  var W=cv.width,H=cv.height;
+  var sx=W/320,sy=H/240;
+  var x=fx*sx,y=fy*sy,w=fw*sx,h=fh*sy;
+  ctx.clearRect(0,0,W,H);
+
+  // Fond
+  ctx.fillStyle='rgba(255,69,0,.15)';
+  ctx.fillRect(x,y,w,h);
+
+  // Bordure
+  ctx.strokeStyle='#ff4500';ctx.lineWidth=2.5;
+  ctx.strokeRect(x,y,w,h);
+
+  // Coins
+  var cs=14;
+  ctx.strokeStyle='#ff8c00';ctx.lineWidth=3.5;
+  [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(function(c2){
+    ctx.beginPath();
+    ctx.moveTo(c2[0]+c2[2]*cs,c2[1]);
+    ctx.lineTo(c2[0],c2[1]);
+    ctx.lineTo(c2[0],c2[1]+c2[3]*cs);
+    ctx.stroke();
+  });
+
+  // Label
+  var lbl='FIRE '+Math.round(c*100)+'%';
+  ctx.font='bold 14px monospace';
+  var lw=ctx.measureText(lbl).width+12;
+  var ly=(y>22)?y-6:y+h+18;
+  ctx.fillStyle='rgba(255,69,0,.9)';
+  ctx.fillRect(x,ly-15,lw,19);
+  ctx.fillStyle='#fff';
+  ctx.fillText(lbl,x+6,ly);
+}
+
+function drawGlobal(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='rgba(255,69,0,.85)';ctx.lineWidth=4;
+  ctx.strokeRect(4,4,cv.width-8,cv.height-8);
+  ctx.font='bold 18px monospace';ctx.fillStyle='rgba(255,69,0,.95)';
+  ctx.textAlign='center';
+  ctx.fillText('FIRE DETECTED',cv.width/2,32);
+  ctx.textAlign='left';
+}
+
+// Moteurs
+function mv(d){
+  if(!CAR)return;
+  fetch('http://'+CAR+'/move?dir='+d).catch(function(){});
+}
+
+// Clavier
+document.addEventListener('keydown',function(e){
+  if(['ArrowUp','z','Z'].includes(e.key))    mv('forward');
+  if(['ArrowDown','s','S'].includes(e.key))  mv('backward');
+  if(['ArrowLeft','q','Q'].includes(e.key))  mv('left');
+  if(['ArrowRight','d','D'].includes(e.key)) mv('right');
+  if(e.key===' ')mv('stop');
+});
+document.addEventListener('keyup',function(e){
+  var k=e.key.toLowerCase();
+  if(['arrowup','arrowdown','arrowleft','arrowright','z','s','q','d'].includes(k))mv('stop');
+});
+
+// Vitesse
+function setSpd(v){
+  document.getElementById('sv2').textContent=v;
+  if(CAR)fetch('http://'+CAR+'/speed?val='+v).catch(function(){});
+}
+
+// Servo
+var st=null;
+function onSrv(v){
+  document.getElementById('sv').textContent=v+'°';
+  clearTimeout(st);
+  st=setTimeout(function(){
+    if(CAM)fetch('http://'+CAM+'/servo?angle='+v).catch(function(){});
+  },80);
+}
+function setSrv(v){
+  document.getElementById('sl').value=v;
+  document.getElementById('sv').textContent=v+'°';
+  if(CAM)fetch('http://'+CAM+'/servo?angle='+v).catch(function(){});
+}
+
+// Indicateurs
+function dot(id,lid,txt,state){
+  var d=document.getElementById(id);
+  d.className='dot'+(state?' '+state:'');
+  document.getElementById(lid).textContent=txt;
+}
+
+// Démarrage
+setInterval(poll,400);
+setInterval(chkCar,4000);
+</script>
+</body>
+</html>

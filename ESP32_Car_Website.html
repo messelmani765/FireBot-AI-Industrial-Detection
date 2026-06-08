@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+<title>ESP32 Car — Control Panel</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04070f;
+  --bg2:#080e1f;
+  --bg3:#0c1630;
+  --acc:#00d4ff;
+  --acc2:#7c3aed;
+  --acc3:#f97316;
+  --red:#ef4444;
+  --green:#22c55e;
+  --bdr:#0f2a4a;
+  --txt:#e2e8f0;
+  --txt2:#64748b
+}
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--txt);
+  font-family:'Rajdhani',sans-serif
+}
+body{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:10px;
+  gap:10px
+}
+
+/* ── HEADER ── */
+.hdr{
+  width:100%;
+  max-width:760px;
+  background:linear-gradient(135deg,#060d1f,#0a1628);
+  border:1px solid var(--bdr);
+  border-radius:14px;
+  padding:14px 22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+  overflow:hidden
+}
+.hdr::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--acc),var(--acc2),transparent)
+}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{
+  width:42px;height:42px;
+  border:2px solid var(--acc);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;
+  box-shadow:0 0 14px rgba(0,212,255,.25)
+}
+.logo-txt{
+  font-family:'Orbitron',monospace;
+  font-size:15px;font-weight:900;
+  color:var(--acc);letter-spacing:3px
+}
+.logo-sub{font-size:10px;color:var(--txt2);letter-spacing:2px;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:14px}
+.dot{
+  width:9px;height:9px;border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 10px var(--green);
+  animation:pulse 2s infinite
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.status-txt{font-size:10px;color:var(--green);font-family:'Orbitron',monospace;letter-spacing:2px}
+.ip-box{
+  background:var(--bg3);
+  border:1px solid var(--bdr);
+  border-radius:6px;
+  padding:5px 12px;
+  font-size:11px;color:var(--acc);
+  font-family:'Orbitron',monospace;letter-spacing:1px
+}
+
+/* ── MAIN GRID ── */
+.main{
+  width:100%;max-width:760px;
+  display:grid;
+  grid-template-columns:1fr 270px;
+  gap:12px
+}
+@media(max-width:600px){.main{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:12px}
+
+/* ── PANELS ── */
+.panel{
+  background:linear-gradient(160deg,#070e20,#0a1525);
+  border:1px solid var(--bdr);
+  border-radius:14px;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  position:relative
+}
+.panel::after{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.3),transparent)
+}
+.ph{
+  padding:10px 16px;
+  border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,212,255,.02)
+}
+.pi{font-size:15px}
+.pt{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:var(--acc)}
+.pb{padding:18px;flex:1}
+
+/* ── D-PAD ── */
+.dpad{display:flex;flex-direction:column;align-items:center;gap:7px}
+.drow{display:flex;gap:7px;align-items:center}
+.cb{
+  width:70px;height:70px;
+  border-radius:14px;
+  border:1.5px solid #1a3a5c;
+  background:linear-gradient(145deg,#0c1e38,#071528);
+  color:var(--txt);font-size:28px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .12s;
+  user-select:none;touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  position:relative;overflow:hidden;
+  font-family:sans-serif;
+  box-shadow:0 4px 15px rgba(0,0,0,.4)
+}
+.cb::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.05),transparent);
+  pointer-events:none
+}
+.cb:active,.cb.on{
+  background:linear-gradient(145deg,#00c8e8,#0099bb);
+  color:#04070f;border-color:var(--acc);
+  transform:scale(.91);
+  box-shadow:0 0 25px rgba(0,212,255,.5)
+}
+.cs{
+  background:linear-gradient(145deg,#1c0909,#130606);
+  border-color:#5a1a1a;color:var(--red);
+  font-size:9px;font-weight:900;letter-spacing:1px;
+  font-family:'Orbitron',monospace
+}
+.cs:active,.cs.on{
+  background:linear-gradient(145deg,#dc2626,#b91c1c);
+  color:#fff;border-color:var(--red);
+  box-shadow:0 0 25px rgba(239,68,68,.5)
+}
+
+/* ── SERVO ── */
+.srv-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.srv-lbl{font-size:9px;color:var(--txt2);width:48px;font-family:'Orbitron',monospace;letter-spacing:1px}
+input[type=range]{
+  flex:1;-webkit-appearance:none;
+  height:5px;border-radius:3px;
+  background:linear-gradient(90deg,#7c3aed,var(--bg3) 70%);
+  outline:none;cursor:pointer;border:none
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:20px;height:20px;border-radius:50%;
+  background:linear-gradient(135deg,#c4b5fd,#7c3aed);
+  cursor:pointer;border:2px solid var(--bg);
+  box-shadow:0 0 10px rgba(124,58,237,.6)
+}
+.srv-val{font-family:'Orbitron',monospace;font-size:13px;color:var(--acc2);font-weight:700;min-width:38px;text-align:right}
+.cbtn{
+  width:100%;
+  background:rgba(124,58,237,.08);
+  border:1px solid rgba(124,58,237,.3);
+  border-radius:8px;padding:9px;
+  color:var(--acc2);font-size:9px;
+  cursor:pointer;letter-spacing:2px;
+  font-family:'Orbitron',monospace;
+  transition:all .15s;margin-top:2px
+}
+.cbtn:hover,.cbtn:active{background:rgba(124,58,237,.2);border-color:var(--acc2)}
+
+/* ── STATUS ── */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.st{
+  background:var(--bg3);border-radius:10px;
+  padding:12px 14px;border:1px solid var(--bdr);
+  position:relative;overflow:hidden
+}
+.st::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--acc),transparent);opacity:.35
+}
+.st-l{font-size:8px;letter-spacing:2px;color:var(--txt2);font-family:'Orbitron',monospace;margin-bottom:6px}
+.st-v{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:var(--acc)}
+
+/* ── CHATBOT ── */
+.chat-panel{
+  background:linear-gradient(160deg,#070e20,#0a1525);
+  border:1px solid var(--bdr);
+  border-radius:14px;
+  display:flex;flex-direction:column;
+  overflow:hidden;position:relative
+}
+.chat-panel::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),transparent)
+}
+.chat-hdr{
+  padding:12px 16px;border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;gap:10px;
+  background:rgba(124,58,237,.03)
+}
+.bot-av{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,#1e3a8a,#4c1d95);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+  border:1px solid rgba(124,58,237,.4);
+  box-shadow:0 0 12px rgba(124,58,237,.2)
+}
+.bot-name{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:var(--txt);letter-spacing:2px}
+.bot-sub{font-size:9px;color:var(--txt2);margin-top:1px}
+.msgs{
+  flex:1;overflow-y:auto;
+  padding:12px;
+  display:flex;flex-direction:column;gap:10px;
+  height:390px
+}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:rgba(124,58,237,.3);border-radius:2px}
+.msg{display:flex;flex-direction:column}
+.msg.u{align-items:flex-end}
+.bubble{
+  padding:9px 13px;border-radius:12px;
+  font-size:12px;line-height:1.65;
+  max-width:210px;word-break:break-word
+}
+.msg.b .bubble{
+  background:linear-gradient(135deg,#0f2040,#091830);
+  color:#cbd5e1;border-bottom-left-radius:3px;
+  border:1px solid var(--bdr)
+}
+.msg.u .bubble{
+  background:linear-gradient(135deg,#0e7490,#0891b2);
+  color:#fff;font-weight:600;
+  border-bottom-right-radius:3px;
+  box-shadow:0 3px 15px rgba(0,212,255,.25)
+}
+.msg-t{font-size:9px;color:#2d3f55;padding:0 4px;margin-top:3px}
+.tag{
+  display:inline-block;
+  background:rgba(0,212,255,.08);
+  border:1px solid rgba(0,212,255,.2);
+  border-radius:4px;padding:1px 6px;
+  font-size:10px;color:var(--acc);
+  font-family:'Orbitron',monospace;letter-spacing:.5px
+}
+.act-bar{
+  background:rgba(0,212,255,.04);
+  border:1px solid rgba(0,212,255,.1);
+  border-radius:6px;padding:5px 9px;margin-top:6px;
+  font-size:10px;color:var(--acc);font-family:'Orbitron',monospace
+}
+.hints{
+  display:flex;flex-wrap:wrap;gap:4px;
+  padding:8px 12px;border-top:1px solid var(--bdr)
+}
+.hint{
+  background:var(--bg);border:1px solid var(--bdr);
+  border-radius:5px;padding:4px 9px;
+  font-size:9px;color:var(--txt2);cursor:pointer;
+  font-family:'Orbitron',monospace;letter-spacing:.5px;
+  transition:all .12s;-webkit-tap-highlight-color:transparent
+}
+.hint:hover,.hint:active{border-color:var(--acc);color:var(--acc);background:rgba(0,212,255,.06)}
+.inp-row{display:flex;gap:7px;padding:10px 12px;border-top:1px solid var(--bdr)}
+.ci{
+  flex:1;background:var(--bg3);
+  border:1px solid var(--bdr);border-radius:9px;
+  padding:9px 13px;color:var(--txt);
+  font-size:12px;font-family:'Rajdhani',sans-serif;
+  outline:none;transition:all .15s
+}
+.ci::placeholder{color:var(--txt2);font-size:11px}
+.ci:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(0,212,255,.08)}
+.sb{
+  background:linear-gradient(135deg,#00c4ee,#0891b2);
+  border:none;border-radius:9px;
+  padding:9px 16px;color:#04070f;
+  font-size:16px;font-weight:900;cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,212,255,.2)
+}
+.sb:hover{opacity:.88}
+
+/* ── TYPING ── */
+.typing span{
+  display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--acc2);margin:0 2px;
+  animation:ty .9s infinite
+}
+.typing span:nth-child(2){animation-delay:.18s}
+.typing span:nth-child(3){animation-delay:.36s}
+@keyframes ty{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-6px);opacity:1}}
+
+/* ── SCAN LINE ── */
+.scan-line{
+  position:fixed;top:0;left:0;
+  width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.5),transparent);
+  animation:scan 5s linear infinite;
+  pointer-events:none;z-index:999
+}
+@keyframes scan{0%{top:-2px}100%{top:100vh}}
+</style>
+</head>
+<body>
+<div class="scan-line"></div>
+
+<!-- ── HEADER ── -->
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-icon">&#x1F916;</div>
+    <div>
+      <div class="logo-txt">ESP32 &mdash; CAR</div>
+      <div class="logo-sub">ROBOTIC CONTROL SYSTEM v3.0</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="dot"></div>
+      <span class="status-txt">ONLINE</span>
+    </div>
+    <div class="ip-box" id="ip-disp">192.168.x.x</div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- COLONNE GAUCHE -->
+  <div class="col">
+
+    <!-- MOTEURS -->
+    <div class="panel">
+      <div class="ph">
+        <span class="pi">&#x26A1;</span>
+        <span class="pt">MOTEURS</span>
+      </div>
+      <div class="pb">
+        <div class="dpad">
+          <div class="drow">
+            <div class="cb" id="bF"
+              onmousedown="mv('forward')" onmouseup="mv('stop')"
+              ontouchstart="pe(event);mv('forward')" ontouchend="pe(event);mv('stop')">&#9650;</div>
+          </div>
+          <div class="drow">
+            <div class="cb" id="bL"
+              onmousedown="mv('left')" onmouseup="mv('stop')"
+              ontouchstart="pe(event);mv('left')" ontouchend="pe(event);mv('stop')">&#9668;</div>
+            <div class="cb cs" id="bS" onclick="mv('stop')">STOP</div>
+            <div class="cb" id="bR"
+              onmousedown="mv('right')" onmouseup="mv('stop')"
+              ontouchstart="pe(event);mv('right')" ontouchend="pe(event);mv('stop')">&#9658;</div>
+          </div>
+          <div class="drow">
+            <div class="cb" id="bB"
+              onmousedown="mv('backward')" onmouseup="mv('stop')"
+              ontouchstart="pe(event);mv('backward')" ontouchend="pe(event);mv('stop')">&#9660;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVO -->
+    <div class="panel">
+      <div class="ph">
+        <span class="pi">&#x1F4F7;</span>
+        <span class="pt">SERVO CAMERA</span>
+      </div>
+      <div class="pb">
+        <div class="srv-row">
+          <span class="srv-lbl">PAN</span>
+          <input type="range" min="0" max="180" value="90" id="pan" oninput="srv(this.value)"/>
+          <span class="srv-val" id="pv">90&#176;</span>
+        </div>
+        <button class="cbtn" onclick="ctr()">&#8857; CENTRER</button>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div class="panel">
+      <div class="ph">
+        <span class="pi">&#x1F4CA;</span>
+        <span class="pt">STATUS</span>
+      </div>
+      <div class="pb">
+        <div class="sgrid">
+          <div class="st">
+            <div class="st-l">ETAT</div>
+            <div class="st-v" id="ss" style="font-size:11px">ARRET</div>
+          </div>
+          <div class="st">
+            <div class="st-l">PAN</div>
+            <div class="st-v" id="sp" style="color:#a78bfa">90&#176;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /col -->
+
+  <!-- CHATBOT -->
+  <div class="chat-panel">
+    <div class="chat-hdr">
+      <div class="bot-av">&#x1F916;</div>
+      <div>
+        <div class="bot-name">AMINE BOT</div>
+        <div class="bot-sub">Assistant de controle intelligent</div>
+      </div>
+    </div>
+    <div class="msgs" id="msgs">
+      <div class="msg b">
+        <div class="bubble">
+          Bonjour ! Dis-moi :<br>
+          <span class="tag">avance</span> <span class="tag">recule</span><br>
+          <span class="tag">gauche</span> <span class="tag">droite</span><br>
+          <span class="tag">stop</span><br>
+          <span class="tag">cam gauche</span><br>
+          <span class="tag">cam droite</span><br>
+          <span class="tag">cam centre</span>
+        </div>
+        <div class="msg-t">maintenant</div>
+      </div>
+    </div>
+    <div class="hints">
+      <div class="hint" onclick="qc('avance')">avance</div>
+      <div class="hint" onclick="qc('recule')">recule</div>
+      <div class="hint" onclick="qc('gauche')">gauche</div>
+      <div class="hint" onclick="qc('droite')">droite</div>
+      <div class="hint" onclick="qc('stop')">stop</div>
+      <div class="hint" onclick="qc('cam centre')">cam &#8857;</div>
+    </div>
+    <div class="inp-row">
+      <input class="ci" id="ci" placeholder="Tape une commande..." onkeydown="if(event.key==='Enter')send()"/>
+      <button class="sb" onclick="send()">&#8593;</button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// Affiche l'IP automatiquement quand la page est servie par l'ESP32
+document.getElementById('ip-disp').textContent = window.location.hostname || '192.168.x.x';
+
+function pe(ev){ ev.preventDefault(); }
+
+var sn = {forward:'AVANT', backward:'ARRIERE', left:'GAUCHE', right:'DROITE', stop:'ARRET'};
+var btnIds = {forward:'bF', backward:'bB', left:'bL', right:'bR', stop:'bS'};
+
+var cmdMap = {
+  'avance':'forward',   'avant':'forward',   'en avant':'forward',  'vas-y':'forward',
+  'recule':'backward',  'arriere':'backward', 'en arriere':'backward','reculer':'backward',
+  'gauche':'left',      'tourne gauche':'left','a gauche':'left',
+  'droite':'right',     'tourne droite':'right','a droite':'right',
+  'stop':'stop',        'arrete':'stop',      'arret':'stop',        'halt':'stop'
+};
+
+var srvMap = {
+  'cam gauche':45,    'camera gauche':45,
+  'cam droite':135,   'camera droite':135,
+  'cam centre':90,    'camera centre':90,
+  'cam haut':60,      'camera haut':60,
+  'cam bas':120,      'camera bas':120
+};
+
+function mv(d) {
+  Object.values(btnIds).forEach(function(id){
+    var b = document.getElementById(id);
+    if(b) b.classList.remove('on');
+  });
+  var b = document.getElementById(btnIds[d]);
+  if(b) b.classList.add('on');
+  document.getElementById('ss').textContent = sn[d] || d;
+  fetch('/' + d).catch(function(){});
+}
+
+function srv(v) {
+  document.getElementById('pv').textContent = v + '\u00b0';
+  document.getElementById('sp').textContent = v + '\u00b0';
+  fetch('/servo?val=' + v).catch(function(){});
+}
+
+function ctr() {
+  document.getElementById('pan').value = 90;
+  srv(90);
+}
+
+function addMsg(txt, role, act) {
+  var box = document.getElementById('msgs');
+  var now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  var d = document.createElement('div');
+  d.className = 'msg ' + role;
+  d.innerHTML = '<div class="bubble">' + txt + (act ? '<div class="act-bar">\u26a1 ' + act + '</div>' : '') + '</div><div class="msg-t">' + now + '</div>';
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function showTyping() {
+  var box = document.getElementById('msgs');
+  var d = document.createElement('div');
+  d.className = 'msg b'; d.id = 'typ';
+  d.innerHTML = '<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function process(txt) {
+  var low = txt.toLowerCase().trim();
+  showTyping();
+  setTimeout(function(){
+    var el = document.getElementById('typ');
+    if(el) el.remove();
+    var found = false;
+
+    for(var k in cmdMap){
+      if(low.indexOf(k) >= 0){
+        var d = cmdMap[k];
+        mv(d);
+        addMsg('Commande : <span class="tag">' + k.toUpperCase() + '</span>', 'b', 'ESP32 \u2192 /' + d);
+        found = true; break;
+      }
+    }
+
+    if(!found){
+      for(var k in srvMap){
+        if(low.indexOf(k) >= 0){
+          var v = srvMap[k];
+          srv(v);
+          document.getElementById('pan').value = v;
+          addMsg('Servo : <span class="tag">' + k.toUpperCase() + '</span>', 'b', 'ESP32 \u2192 /servo?val=' + v);
+          found = true; break;
+        }
+      }
+    }
+
+    if(!found){
+      addMsg('Commande inconnue.<br>Essaie : <span class="tag">avance</span> <span class="tag">stop</span> <span class="tag">cam droite</span>', 'b');
+    }
+  }, 450);
+}
+
+function send() {
+  var i = document.getElementById('ci');
+  var t = i.value.trim();
+  if(!t) return;
+  addMsg(t, 'u');
+  i.value = '';
+  process(t);
+}
+
+function qc(c) { addMsg(c, 'u'); process(c); }
+
+// Controle clavier (fleches)
+document.addEventListener('keydown', function(ev){
+  if(document.activeElement === document.getElementById('ci')) return;
+  var m = {ArrowUp:'forward', ArrowDown:'backward', ArrowLeft:'left', ArrowRight:'right', ' ':'stop'};
+  if(m[ev.key]){ ev.preventDefault(); mv(m[ev.key]); }
+});
+document.addEventListener('keyup', function(ev){
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(ev.key) >= 0) mv('stop');
+});
+</script>
+</body>
+</html>
